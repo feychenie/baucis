@@ -55,13 +55,19 @@ var middleware = module.exports = {
     }
 
     // If it's not a POST, send now because Location shouldn't be set.
-    if (request.method !== 'POST') return response.json(documents);
+    if (request.method !== 'POST') return response.json(
+      Array.isArray( documents ) ?
+          documents.map( function(doc){ return doc.toObject();} )
+        : documents.toObject()
+    );
+
 
     // ensure there is a trailing slash on basePath
     // otherwise the models plural will be missing in the location url
     if(/\/$/.test(basePath) == false) basePath += '/';
 
-    // Otherwise, set the location and send JSON document(s).  Don't set location if documents
+
+      // Otherwise, set the location and send JSON document(s).  Don't set location if documents
     // don't have IDs for whatever reason e.g. custom middleware.
     if (!Array.isArray(documents) && documents instanceof mongoose.Document) {
       if (documents.get) {
@@ -79,6 +85,10 @@ var middleware = module.exports = {
     }
 
     if (location) response.set('Location', location);
-    response.json(documents);
+    response.json(
+      Array.isArray( documents ) ?
+        documents.map( function(doc){ return doc.toObject();} )
+      : documents.toObject()
+    );
   }
 };
