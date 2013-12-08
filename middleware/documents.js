@@ -5,7 +5,7 @@ var mongoose = require('mongoose');
 // __Module Definition__
 var middleware = module.exports = {
   lastModified: function (request, response, next) {
-    var lastModifiedPath = request.app.get('lastModified');
+    var lastModifiedPath = request.baucis.controller.get('lastModified');
     var documents = request.baucis.documents;
 
     if (!lastModifiedPath) return next();
@@ -34,7 +34,7 @@ var middleware = module.exports = {
   send: function (request, response, next) {
     var ids;
     var location;
-    var findBy = request.app.get('findBy');
+    var findBy = request.baucis.controller.get('findBy');
     var basePath = request.originalUrl;
     var documents = request.baucis.documents;
 
@@ -62,9 +62,10 @@ var middleware = module.exports = {
     );
 
 
-    // ensure there is a trailing slash on basePath
-    // otherwise the models plural will be missing in the location url
-    if(/\/$/.test(basePath) == false) basePath += '/';
+    // Ensure there is a trailing slash on basePath for proper function of
+    // url.resolve, otherwise the model's plural will be missing in the location
+    // URL.
+    if(!basePath.match(/\/$/)) basePath += '/';
 
 
       // Otherwise, set the location and send JSON document(s).  Don't set location if documents

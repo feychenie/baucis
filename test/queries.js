@@ -42,7 +42,7 @@ describe('Queries', function () {
 
   it('should support limit 1', function (done) {
     var options = {
-      url: 'http://localhost:8012/api/v1/vegetables?limit=1',
+      url: 'http://localhost:8012/api/v1/minerals?limit=1',
       json: true
     };
     request.get(options, function (error, response, body) {
@@ -55,7 +55,7 @@ describe('Queries', function () {
 
   it('should support limit 2', function (done) {
     var options = {
-      url: 'http://localhost:8012/api/v1/vegetables?limit=2',
+      url: 'http://localhost:8012/api/v1/minerals?limit=2',
       json: true
     };
     request.get(options, function (error, response, body) {
@@ -95,6 +95,19 @@ describe('Queries', function () {
   it('should disallow populating deselected fields 2', function (done) {
     var options = {
       url: 'http://localhost:8012/api/v1/vegetables?populate={ "path": "species" }',
+      json: true
+    };
+    request.get(options, function (error, response, body) {
+      if (error) return done(error);
+      expect(response).to.have.property('statusCode', 500);
+      expect(body).to.match(/Including excluded fields is not permitted[.]/i);
+      done();
+    });
+  });
+
+  it('should support default express query parser when using populate', function (done) {
+    var options = {
+      url: 'http://localhost:8012/api/v1/vegetables?populate[path]=species',
       json: true
     };
     request.get(options, function (error, response, body) {
@@ -157,6 +170,20 @@ describe('Queries', function () {
     });
   });
 
+  it('should allow default express query string format', function(done) {
+    var options = {
+      url: 'http://localhost:8012/api/v1/vegetables?conditions[name]=Radicchio',
+      json: true
+    };
+    request.get(options, function (error, response, body) {
+      if (error) return done(error);
+      expect(response).to.have.property('statusCode', 200);
+      expect(body).to.have.property('length', 1);
+      expect(body[0]).to.have.property('name', 'Radicchio')
+      done();
+    });
+  });
+
   it('should allow selecting fields', function (done) {
     var options = {
       url: 'http://localhost:8012/api/v1/vegetables?select=-_id lastModified',
@@ -174,7 +201,7 @@ describe('Queries', function () {
 
   it('should allow adding paging links', function(done) {
     var options = {
-      url: 'http://localhost:8012/api/v1/vegetables?limit=2&sort=name',
+      url: 'http://localhost:8012/api/v1/minerals?limit=2',
       json: true
     };
     request.get(options, function (error, response, body) {
@@ -203,7 +230,7 @@ describe('Queries', function () {
 
   it('should return next for first page', function(done) {
     var options = {
-      url: 'http://localhost:8012/api/v1/vegetables?limit=2&sort=name',
+      url: 'http://localhost:8012/api/v1/minerals?limit=2',
       json: true
     };
     request.get(options, function (error, response, body) {
@@ -217,7 +244,7 @@ describe('Queries', function () {
 
   it('should return previous for second page', function(done) {
     var options = {
-      url: 'http://localhost:8012/api/v1/vegetables?limit=2&sort=name&skip=2',
+      url: 'http://localhost:8012/api/v1/minerals?limit=2&skip=2',
       json: true
     };
     request.get(options, function (error, response, body) {
@@ -231,7 +258,7 @@ describe('Queries', function () {
 
   it('should not return paging links previous for first page', function(done) {
     var options = {
-      url: 'http://localhost:8012/api/v1/vegetables?limit=2&sort=name',
+      url: 'http://localhost:8012/api/v1/minerals?limit=2',
       json: true
     };
     request.get(options, function (error, response, body) {
@@ -245,7 +272,7 @@ describe('Queries', function () {
 
   it('should not return paging links next for last page', function(done) {
     var options = {
-      url: 'http://localhost:8012/api/v1/vegetables?limit=2&sort=name&skip=6',
+      url: 'http://localhost:8012/api/v1/minerals?limit=2&skip=6',
       json: true
     };
     request.get(options, function (error, response, body) {
@@ -258,9 +285,9 @@ describe('Queries', function () {
   });
 
   it('should preserve query in paging links', function(done) {
-    var conditions = JSON.stringify({ name: { $regex: /.*i.*/ } });
+    var conditions = JSON.stringify({ color: { $regex: /.*e.*/ } });
     var options = {
-      url: 'http://localhost:8012/api/v1/vegetables?limit=2&sort=name&skip=0&conditions=' + conditions,
+      url: 'http://localhost:8012/api/v1/minerals?limit=1&skip=0&conditions=' + conditions,
       json: true
     };
     request.get(options, function (error, response, body) {
@@ -276,25 +303,24 @@ describe('Queries', function () {
 
   it('should allow retrieving paging links next', function(done) {
     var options = {
-      url: 'http://localhost:8012/api/v1/vegetables?limit=2&sort=name&skip=0',
+      url: 'http://localhost:8012/api/v1/minerals?limit=2&skip=0',
       json: true
     };
     request.get(options, function (error, response, body) {
       if (error) return done(error);
+
       expect(response).to.have.property('statusCode', 200);
-      expect(body[0]).to.have.property('name');
-      expect(body[0].name).to.equal('Carrot');
       expect(response.headers).to.have.property('link');
+
       var links = parselinks(response.headers.link);
       expect(links).to.have.property('next');
+
       var options = {
         url: 'http://localhost:8012' + links.next,
         json: true
       };
       request.get(options, function (error, response, body) {
         expect(response).to.have.property('statusCode', 200);
-        expect(body[0]).to.have.property('name');
-        expect(body[0].name).to.equal('Pea');
         done();
       })
     });
@@ -302,14 +328,12 @@ describe('Queries', function () {
 
   it('should allow retrieving paging links previous', function(done) {
     var options = {
-      url: 'http://localhost:8012/api/v1/vegetables?limit=2&sort=name&skip=2',
+      url: 'http://localhost:8012/api/v1/minerals?limit=2&skip=2',
       json: true
     };
     request.get(options, function (error, response, body) {
       if (error) return done(error);
       expect(response).to.have.property('statusCode', 200);
-      expect(body[0]).to.have.property('name');
-      expect(body[0].name).to.equal('Pea');
       expect(response.headers).to.have.property('link');
       var links = parselinks(response.headers.link);
       expect(links).to.have.property('previous');
@@ -319,8 +343,6 @@ describe('Queries', function () {
       };
       request.get(options, function (error, response, body) {
         expect(response).to.have.property('statusCode', 200);
-        expect(body[0]).to.have.property('name');
-        expect(body[0].name).to.equal('Carrot');
         done();
       })
     });
@@ -328,14 +350,12 @@ describe('Queries', function () {
 
   it('should allow retrieving paging links last', function(done) {
     var options = {
-      url: 'http://localhost:8012/api/v1/vegetables?limit=2&sort=name&skip=6',
+      url: 'http://localhost:8012/api/v1/minerals?limit=2&skip=6',
       json: true
     };
     request.get(options, function (error, response, body) {
       if (error) return done(error);
       expect(response).to.have.property('statusCode', 200);
-      expect(body[0]).to.have.property('name');
-      expect(body[0].name).to.equal('Turnip');
       expect(response.headers).to.have.property('link');
       var links = parselinks(response.headers.link);
       expect(links).to.have.property('first');
@@ -345,8 +365,6 @@ describe('Queries', function () {
       };
       request.get(options, function (error, response, body) {
         expect(response).to.have.property('statusCode', 200);
-        expect(body[0]).to.have.property('name');
-        expect(body[0].name).to.equal('Carrot');
         done();
       })
     });
@@ -354,14 +372,12 @@ describe('Queries', function () {
 
   it('should allow retrieving paging links first', function(done) {
     var options = {
-      url: 'http://localhost:8012/api/v1/vegetables?limit=2&sort=name&skip=0',
+      url: 'http://localhost:8012/api/v1/minerals?limit=2&skip=0',
       json: true
     };
     request.get(options, function (error, response, body) {
       if (error) return done(error);
       expect(response).to.have.property('statusCode', 200);
-      expect(body[0]).to.have.property('name');
-      expect(body[0].name).to.equal('Carrot');
       expect(response.headers).to.have.property('link');
       var links = parselinks(response.headers.link);
       expect(links).to.have.property('last');
@@ -371,8 +387,6 @@ describe('Queries', function () {
       };
       request.get(options, function (error, response, body) {
         expect(response).to.have.property('statusCode', 200);
-        expect(body[0]).to.have.property('name');
-        expect(body[0].name).to.equal('Turnip');
         done();
       });
     });

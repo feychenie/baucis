@@ -79,7 +79,7 @@ var Controller = module.exports = function (options) {
 
   controller.getFindByConditions = function (request) {
     var conditions = extend({}, request.baucis.conditions || {});
-    conditions[request.app.get('findBy')] = request.params.id;
+    conditions[request.baucis.controller.get('findBy')] = request.params.id;
     return conditions;
   };
 
@@ -119,12 +119,16 @@ var Controller = module.exports = function (options) {
 
   // __Initial Middleware__
 
-  // Middleware for parsing JSON requests
+  // Middleware for parsing JSON POST/PUTs
   controller.use(express.json());
+
+  // Middleware for parsing form POST/PUTs
+  controller.use(express.urlencoded());
 
   // Initialize baucis state
   controller.use(function (request, response, next) {
     request.baucis = {};
+    request.baucis.controller = controller;
     next();
   });
 

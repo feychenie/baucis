@@ -168,13 +168,175 @@ describe('Controllers', function () {
     });
   });
 
-  it('should allow mounting of subcontrollers', function (done) {
+  it('should allow mounting of subcontrollers (GET plural)', function (done) {
     var options = {
       url: 'http://localhost:8012/api/v1/stores/123/tools',
       json: true
     };
-    request.get(options, function (err, response, body) {
-      if (err) return done(err);
+    request.get(options, function (error, response, body) {
+      if (error) return done(error);
+      expect(response.statusCode).to.be(200);
+      done();
+    });
+  });
+
+  it('should allow mounting of subcontrollers (POST plural)', function (done) {
+    var options = {
+      url: 'http://localhost:8012/api/v1/stores/123/tools',
+      json: { name: 'Reticulating Saw' }
+    };
+    request.post(options, function (error, response, body) {
+      if (error) return done(error);
+      expect(response.statusCode).to.be(201);
+      done();
+    });
+  });
+
+  it('should allow mounting of subcontrollers (DEL plural)', function (done) {
+    var options = {
+      url: 'http://localhost:8012/api/v1/stores/123/tools',
+      json: true
+    };
+    request.del(options, function (error, response, body) {
+      if (error) return done(error);
+      expect(response.statusCode).to.be(200);
+      done();
+    });
+  });
+
+  it('should allow mounting of subcontrollers (GET singular)', function (done) {
+    var options = {
+      url: 'http://localhost:8012/api/v1/stores/123/tools',
+      json: true
+    };
+    request.get(options, function (error, response, body) {
+      if (error) return done(error);
+      expect(response.statusCode).to.be(200);
+
+      var id = body[0]._id;
+      var options = {
+        url: 'http://localhost:8012/api/v1/stores/123/tools/' + id,
+        json: true
+      };
+      request.get(options, function (error, response, body) {
+        if (error) return done(error);
+        expect(response.statusCode).to.be(200);
+        done();
+      });
+    });
+  });
+
+  it('should allow mounting of subcontrollers (PUT singular)', function (done) {
+    var options = {
+      url: 'http://localhost:8012/api/v1/stores/123/tools',
+      json: true
+    };
+    request.get(options, function (error, response, body) {
+      if (error) return done(error);
+      expect(response.statusCode).to.be(200);
+
+      var id = body[0]._id;
+      var options = {
+        url: 'http://localhost:8012/api/v1/stores/123/tools/' + id,
+        json: { name: 'Screwdriver' }
+      };
+      request.put(options, function (error, response, body) {
+        if (error) return done(error);
+        expect(response.statusCode).to.be(200);
+        done();
+      });
+    });
+  });
+
+  it('should allow mounting of subcontrollers (DEL singular)', function (done) {
+    var options = {
+      url: 'http://localhost:8012/api/v1/stores/123/tools',
+      json: true
+    };
+    request.get(options, function (error, response, body) {
+      if (error) return done(error);
+      expect(response.statusCode).to.be(200);
+
+      var id = body[0]._id;
+      var options = {
+        url: 'http://localhost:8012/api/v1/stores/123/tools/' + id,
+        json: true
+      };
+      request.del(options, function (error, response, body) {
+        if (error) return done(error);
+        expect(response.statusCode).to.be(200);
+        done();
+      });
+    });
+  });
+
+  it('should allow parent to function when mounting subcontrollers (GET plural)', function (done) {
+    var options = {
+      url: 'http://localhost:8012/api/v1/stores/',
+      json: true
+    };
+    request.get(options, function (error, response, body) {
+      if (error) return done(error);
+      expect(response.statusCode).to.be(200);
+      done();
+    });
+  });
+
+  it('should allow parent to function when mounting subcontrollers (POST plural)', function (done) {
+    var options = {
+      url: 'http://localhost:8012/api/v1/stores/',
+      json: { name: 'Arena' }
+    };
+    request.post(options, function (error, response, body) {
+      if (error) return done(error);
+      expect(response.statusCode).to.be(201);
+      done();
+    });
+  });
+
+  it('should allow parent to function when mounting subcontrollers (DELETE plural)', function (done) {
+    var options = {
+      url: 'http://localhost:8012/api/v1/stores/',
+      json: true
+    };
+    request.get(options, function (error, response, body) {
+      if (error) return done(error);
+      expect(response.statusCode).to.be(200);
+      done();
+    });
+  });
+
+  it('should allow parent to function when mounting subcontrollers (GET singular)', function (done) {
+    var options = {
+      url: 'http://localhost:8012/api/v1/stores/Westlake',
+      json: true
+    };
+    request.get(options, function (error, response, body) {
+      if (error) return done(error);
+      expect(response.statusCode).to.be(200);
+      done();
+    });
+  });
+
+  it('should allow parent to function when mounting subcontrollers (PUT singular)', function (done) {
+    var options = {
+      url: 'http://localhost:8012/api/v1/stores/Westlake',
+      json: { mercoledi: false }
+    };
+    request.put(options, function (error, response, body) {
+      if (error) return done(error);
+      expect(response.statusCode).to.be(200);
+      done();
+    });
+  });
+
+  it('should allow parent to function when mounting subcontrollers (DELETE singular)', function (done) {
+    var options = {
+      url: 'http://localhost:8012/api/v1/stores/Westlake',
+      json: true
+    };
+    request.del(options, function (error, response, body) {
+      if (error) return done(error);
       expect(response.statusCode).to.be(200);
       done();
     });
@@ -185,8 +347,8 @@ describe('Controllers', function () {
       url: 'http://localhost:8012/api/v1/stores',
       json: true
     };
-    request.del(options, function (err, response, body) {
-      if (err) return done(err);
+    request.del(options, function (error, response, body) {
+      if (error) return done(error);
       expect(response).to.have.property('statusCode', 200);
       expect(response.headers['x-poncho']).to.be('Poncho!');
       done();
@@ -198,8 +360,8 @@ describe('Controllers', function () {
       url: 'http://localhost:8012/api/v1/stores/binfo',
       json: true
     };
-    request.post(options, function (err, response, body) {
-      if (err) return done(err);
+    request.post(options, function (error, response, body) {
+      if (error) return done(error);
       expect(response).to.have.property('statusCode', 200);
       expect(body).to.be('Poncho!');
       done();
@@ -286,7 +448,7 @@ describe('Controllers', function () {
     request.put(options, function (error, response, body) {
       if (error) return done(error);
       expect(response).to.have.property('statusCode', 500);
-      expect(body).to.contain('Error: The "X-Baucis-Push header" is deprecated.  Use "X-Baucis-Update-Operator: $push" instead.');
+      expect(body).to.contain('Error: The &quot;X-Baucis-Push header&quot; is deprecated.  Use &quot;X-Baucis-Update-Operator: $push&quot; instead.');
       done();
     });
   });
@@ -522,5 +684,37 @@ describe('Controllers', function () {
     });
   });
 
+  it('should send 405 when a verb is disabled', function (done) {
+    request.get('http://localhost:8012/api/v1/beans', function (error, response, body) {
+      if (error) return done(error);
+      expect(response).to.have.property('statusCode', 405);
+      expect(response.headers).to.have.property('allow', 'HEAD,POST,PUT,DEL');
+      done();
+    });
+  });
+
+  it('should return a 400 when ID malformed (not ObjectID)', function (done) {
+    var options = {
+      url: 'http://localhost:8012/api/v1/beans/bad',
+      json: true
+    };
+    request.head(options, function (error, response, body) {
+      if (error) return done(error);
+      expect(response).to.have.property('statusCode', 400);
+      done();
+    });
+  });
+
+  it('should return a 400 when ID malformed (not Number)', function (done) {
+    var options = {
+      url: 'http://localhost:8012/api/v1/deans/0booze',
+      json: true
+    };
+    request.head(options, function (error, response, body) {
+      if (error) return done(error);
+      expect(response).to.have.property('statusCode', 400);
+      done();
+    });
+  });
 
 });

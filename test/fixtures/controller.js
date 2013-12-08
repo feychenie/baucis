@@ -1,18 +1,18 @@
 var mongoose = require('mongoose');
 var express = require('express');
 var baucis = require('../..');
+var config = require('./config');
 
 var app;
 var server;
 var controller;
 var subcontroller;
-var cheesy;
 
 var fixture = module.exports = {
-  init: function(done) {
+  init: function (done) {
     var Schema = mongoose.Schema;
 
-    mongoose.connect('mongodb://10.0.0.101/xXxBaUcIsTeStXxX');
+    mongoose.connect(config.mongo.url);
 
     var Stores = new Schema({
       name: { type: String, required: true, unique: true },
@@ -20,7 +20,8 @@ var fixture = module.exports = {
     });
 
     var Tools = new Schema({
-      name: { type: String, required: true }
+      name: { type: String, required: true },
+      bogus: { type: Boolean, default: false, required: true }
     });
 
     var Cheese = new Schema({
@@ -34,15 +35,25 @@ var fixture = module.exports = {
       }]
     });
 
+    var Beans = new Schema({ koji: Boolean });
+    var Deans = new Schema({ room: { type: Number, unique: true } });
+
     if (!mongoose.models['tool']) mongoose.model('tool', Tools);
     if (!mongoose.models['store']) mongoose.model('store', Stores);
     if (!mongoose.models['cheese']) mongoose.model('cheese', Cheese);
+    if (!mongoose.models['bean']) mongoose.model('bean', Beans);
+    if (!mongoose.models['dean']) mongoose.model('dean', Deans);
 
     // Tools embedded controller
     subcontroller = baucis.rest({
       singular: 'tool',
       basePath: '/:storeId/tools',
       publish: false
+    });
+
+    subcontroller.query(function (request, response, next) {
+      request.baucis.query.where('bogus', false);
+      next();
     });
 
     subcontroller.initialize();
@@ -73,13 +84,24 @@ var fixture = module.exports = {
 
     controller.use(subcontroller);
 
-    cheesy = baucis.rest({
+    baucis.rest({
       singular: 'cheese',
       select: '-_id +color name',
       findBy: 'name',
       'allow $push': 'molds arbitrary arbitrary.$.llama',
       'allow $set': 'molds arbitrary.$.champagne',
       'allow $pull': 'molds arbitrary.$.llama'
+    });
+
+    baucis.rest({
+      singular: 'bean',
+      get: false
+    });
+
+    baucis.rest({
+      singular: 'dean',
+      findBy: 'room',
+      get: false
     });
 
     app = express();
@@ -89,12 +111,12 @@ var fixture = module.exports = {
 
     done();
   },
-  deinit: function(done) {
+  deinit: function (done) {
     server.close();
     mongoose.disconnect();
     done();
   },
-  create: function(done) {
+  create: function (done) {
     // clear all first
     mongoose.model('store').remove({}, function (error) {
       if (error) return done(error);

@@ -4,7 +4,10 @@ var middleware = module.exports = {
   conditions: function (request, response, next) {
     if (!request.query.conditions) return next();
 
-    request.baucis.conditions = JSON.parse(request.query.conditions);
+    var conditions = request.query.conditions;
+    if (typeof request.query.conditions === 'string') conditions = JSON.parse(conditions);
+
+    request.baucis.conditions = conditions;
     next();
   },
   // Specify that a count, rather than documents, should be returned
@@ -16,14 +19,14 @@ var middleware = module.exports = {
   },
   // Apply various options based on controller parameters
   controller: function (request, response, next) {
-    if (request.app.get('select') && request.baucis.query) {
-      request.baucis.query.select(request.app.get('select'));
+    if (request.baucis.controller.get('select') && request.baucis.query) {
+      request.baucis.query.select(request.baucis.controller.get('select'));
     }
     next();
   },
   deprecated: function (request, response, next) {
     // Controller Options
-    if (request.app.get('restrict')) return next(new Error('The "restrict" controller options is deprecated.  Use query middleware instead.'));
+    if (request.baucis.controller.get('restrict')) return next(new Error('The "restrict" controller options is deprecated.  Use query middleware instead.'));
     // Headers
     if (request.headers['x-baucis-push']) return next(new Error('The "X-Baucis-Push header" is deprecated.  Use "X-Baucis-Update-Operator: $push" instead.'));
     // No deprecated features found.
@@ -42,21 +45,24 @@ var middleware = module.exports = {
       if (request.query.select.indexOf('+') !== -1) {
         return next(new Error('Including excluded fields is not permitted.'));
       }
-      if (request.app.checkBadSelection(request.query.select)) {
+      if (request.baucis.controller.checkBadSelection(request.query.select)) {
         return next(new Error('Including excluded fields is not permitted.'));
       }
       query.select(request.query.select);
     }
     if (request.query.populate) {
       populate = request.query.populate;
-      if (populate.indexOf('{') !== -1) populate = JSON.parse(request.query.populate);
-      else if (populate.indexOf('[') !== -1) populate = JSON.parse(request.query.populate);
+
+      if (typeof populate === 'string') {
+        if (populate.indexOf('{') !== -1) populate = JSON.parse(populate);
+        else if (populate.indexOf('[') !== -1) populate = JSON.parse(populate);
+      }
 
       if (!Array.isArray(populate)) populate = [ populate ];
 
       populate.forEach(function (field) {
         if (error) return;
-        if (request.app.checkBadSelection(field.path || field)) {
+        if (request.baucis.controller.checkBadSelection(field.path || field)) {
           return error = new Error('Including excluded fields is not permitted.');
         }
         // Don't allow selecting fields from client when populating
@@ -69,5 +75,24 @@ var middleware = module.exports = {
     }
 
     next(error);
+  },
+  checkId: function (request, response, next) {
+    var findBy = request.baucis.controller.get('findBy');
+    var id = request.params.id;
+    var findByPath = request.baucis.controller.get('model').schema.path(findBy);
+    var check = ['ObjectID', 'Number'];
+    var instance = findByPath.instance;
+
+    if (!id) return next();
+    if (check.indexOf(instance) === -1) return next();
+    if (instance === 'ObjectID' && id.match(/^[a-f0-9]{24}$/i)) return next();
+    if (instance === 'Number' && !isNaN(Number(id))) return next();
+
+    response.send(400, 'Invalid ID.');
+  },
+  checkMethod: function (request, response, next) {
+    var method = request.method.toLowerCase();
+    if (request.baucis.controller.get(method) !== false) return next();
+    response.send(405, 'The requested method has been disabled for this resource.');
   }
 };
